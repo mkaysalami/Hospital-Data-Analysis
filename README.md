@@ -10,7 +10,7 @@ A SQL data warehouse and analytics project built on a synthetic hospital dataset
 
 ## Dashboard
 
-Live: https://claude.ai/artifact/6jcCyivFsdCobSvwFopxvi
+Live: https://mkaysalami.github.io/Hospital-Data-Analysis/dashboard/
 
 ![Dashboard preview](dashboard/dashboard_preview.png)
 
