@@ -8,6 +8,19 @@ A SQL data warehouse and analytics project built on a synthetic hospital dataset
 - **Scale:** ~16,500 patient visits (2020–2025), 2,436 patients, 200 doctors
 - **Focus areas:** Data modeling, data cleaning, and analytical querying (joins, CTEs, window functions)
 
+## Dashboard
+
+Live: https://claude.ai/artifact/6jcCyivFsdCobSvwFopxvi
+
+![Dashboard preview](dashboard/dashboard_preview.png)
+
+**Key findings**
+- Nuclear Medicine leads all 33 departments in revenue ($94.3M across 1,018 visits)
+- Dr. Rohan Reddy holds the highest average satisfaction (4.35/5) among doctors with 30+ visits
+- UPI is the most-used payment method by revenue ($496M across 5,404 visits)
+
+**Tools:** MySQL (star schema, CTEs, window functions), Python/pandas (cleaning & aggregation), HTML/SVG/JavaScript (interactive dashboard)
+
 ## Project Structure
 
 ```
@@ -22,7 +35,10 @@ HospitalData/
 │   ├── DIM_Patient_CleanCode.sql           # Name casing, location split, gender normalization
 │   ├── DIM_Department_CleanCode.sql        # Department field standardization
 │   └── DIM_PatientVisit_CleanCode.sql      # Consolidates 4 yearly visit tables into one
-└── Hospital_Data Exploration.sql           # 10 analytical queries
+├── Hospital_Data Exploration.sql           # 10 analytical queries
+└── dashboard/
+    ├── index.html                          # Interactive dashboard (revenue, visits, satisfaction)
+    └── dashboard_preview.png               # Screenshot for this README
 ```
 
 ## Data Model

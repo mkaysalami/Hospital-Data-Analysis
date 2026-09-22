@@ -1,0 +1,466 @@
+<title>Hospital Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --paper:          #f2f3ee;
+    --surface-1:      #fbfbf8;
+    --text-primary:   #17222b;
+    --text-secondary: #4c5a62;
+    --text-muted:     #7c8a8f;
+    --gridline:       #dcdcd2;
+    --baseline:       #b7bcb3;
+    --border:         rgba(23,34,43,0.14);
+    --rule:           rgba(23,34,43,0.22);
+    --accent:         #0d6b58;
+    --accent-soft:    #d7e9e2;
+    --accent-mid:     #5fa593;
+    --good:           #0ca30c;
+    --good-text:      #0d6b58;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --paper:          #12191c;
+      --surface-1:      #182226;
+      --text-primary:   #f3f3ee;
+      --text-secondary: #b9c2c0;
+      --text-muted:     #808c8a;
+      --gridline:       #2b3438;
+      --baseline:       #3c4548;
+      --border:         rgba(243,243,238,0.14);
+      --rule:           rgba(243,243,238,0.24);
+      --accent:         #3fbf9f;
+      --accent-soft:    #1f3c35;
+      --accent-mid:     #2f8d76;
+      --good:           #3fbf6a;
+      --good-text:      #3fbf9f;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --paper:          #12191c;
+    --surface-1:      #182226;
+    --text-primary:   #f3f3ee;
+    --text-secondary: #b9c2c0;
+    --text-muted:     #808c8a;
+    --gridline:       #2b3438;
+    --baseline:       #3c4548;
+    --border:         rgba(243,243,238,0.14);
+    --rule:           rgba(243,243,238,0.24);
+    --accent:         #3fbf9f;
+    --accent-soft:    #1f3c35;
+    --accent-mid:     #2f8d76;
+    --good:           #3fbf6a;
+    --good-text:      #3fbf9f;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 30px 18px 52px;
+  }
+  h1,h2{ font-family:"Source Serif 4", Georgia, serif; text-wrap:balance; margin:0; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; font-variant-numeric:tabular-nums; }
+  .wrap{ max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+
+  header.page-head{
+    display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px 24px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid var(--text-primary);
+  }
+  .eyebrow{
+    font-size:11.5px; font-weight:600; letter-spacing:.11em; text-transform:uppercase;
+    color:var(--text-muted); margin:0 0 8px; font-family:system-ui,sans-serif;
+  }
+  h1{ font-size:30px; font-weight:600; letter-spacing:-0.005em; font-style:italic; }
+  .subtitle{ color:var(--text-secondary); font-size:14px; margin-top:8px; max-width:58ch; line-height:1.5; }
+  .meta{ text-align:right; font-size:12px; color:var(--text-muted); line-height:1.7; font-family:system-ui,sans-serif; }
+  .meta strong{ color:var(--text-secondary); font-weight:600; }
+  .meta .byline{ font-size:13px; color:var(--text-primary); font-weight:600; }
+
+  .card{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:3px;
+    padding:22px;
+  }
+
+  .kpi-strip{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    background:var(--surface-1); border:1px solid var(--border); border-radius:3px;
+  }
+  .kpi{ display:flex; flex-direction:column; gap:7px; padding:20px 22px; border-right:1px solid var(--border); }
+  .kpi:last-child{ border-right:none; }
+  .kpi .label{ font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-muted); font-family:system-ui,sans-serif; }
+  .kpi .value{ font-size:26px; font-weight:600; letter-spacing:-0.01em; }
+  .kpi .delta{ font-size:12px; color:var(--text-secondary); font-family:system-ui,sans-serif; }
+  .kpi .delta.good{ color:var(--good-text); font-weight:600; }
+
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .section-head h2{ font-size:18px; font-weight:600; font-style:italic; }
+  .section-head .hint{ font-size:12px; color:var(--text-muted); font-family:system-ui,sans-serif; }
+
+  .seg{ display:inline-flex; border:1px solid var(--border); border-radius:3px; padding:2px; gap:2px; background:var(--paper); }
+  .seg button{
+    border:none; background:transparent; font-size:12px; font-weight:600; color:var(--text-secondary);
+    padding:5px 11px; border-radius:2px; cursor:pointer; font-family:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .seg button[aria-pressed="true"]{ background:var(--text-primary); color:var(--surface-1); }
+  .seg button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:18px; }
+  .grid-2b{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+
+  svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .axis-label{ fill:var(--text-muted); font-size:10.5px; font-family:"IBM Plex Mono",ui-monospace,monospace; }
+  .grid-line{ stroke:var(--gridline); stroke-width:1; stroke-dasharray:1 3; }
+  .baseline{ stroke:var(--baseline); stroke-width:1; }
+  .bar-label{ fill:var(--text-secondary); font-size:11.5px; font-family:system-ui,sans-serif; }
+  .bar-value{ fill:var(--text-primary); font-size:11.5px; font-weight:600; font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",ui-monospace,monospace; }
+  .hover-target{ cursor:pointer; }
+  .hover-target:hover rect,
+  .hover-target.hovered rect{ filter:brightness(1.12); }
+
+  .tooltip{
+    position:fixed; pointer-events:none; z-index:50;
+    background:var(--text-primary); color:var(--surface-1);
+    font-size:12px; font-family:system-ui,sans-serif; padding:7px 10px; border-radius:3px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.22); transform:translate(-50%,-115%);
+    opacity:0; transition:opacity .08s ease; white-space:nowrap;
+  }
+  .tooltip.show{ opacity:1; }
+  .tooltip .tt-title{ font-weight:700; margin-bottom:2px; }
+
+  .legend{ display:flex; gap:16px; font-size:12px; color:var(--text-secondary); flex-wrap:wrap; font-family:system-ui,sans-serif; }
+  .legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--accent); }
+
+  .notes{ display:flex; flex-direction:column; gap:0; }
+  .notes .lede{ font-style:italic; color:var(--text-secondary); font-size:14px; margin:0 0 14px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .notes .item{
+    display:flex; gap:16px; padding:13px 0; border-bottom:1px solid var(--border);
+  }
+  .notes .item:last-child{ border-bottom:none; padding-bottom:0; }
+  .notes .item .n{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; color:var(--accent); font-weight:600; flex:0 0 auto; padding-top:1px; }
+  .notes .item p{ margin:0; font-size:13.5px; color:var(--text-secondary); line-height:1.55; }
+  .notes .item p strong{ color:var(--text-primary); font-weight:600; }
+
+  footer{
+    font-size:12px; color:var(--text-muted); line-height:1.7; padding-top:16px; border-top:1px solid var(--text-primary);
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-family:system-ui,sans-serif;
+  }
+  footer a{ color:var(--accent); }
+  footer .sig{ font-style:italic; color:var(--text-secondary); }
+
+  @media (max-width: 860px){
+    .kpi-strip{ grid-template-columns:repeat(2,1fr); }
+    .kpi{ border-bottom:1px solid var(--border); }
+    .kpi:nth-child(2n){ border-right:none; }
+    .grid-2, .grid-2b{ grid-template-columns:1fr; }
+    .meta{ text-align:left; }
+    footer{ flex-direction:column; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Hospital Data Analysis &middot; Finance &amp; Operations Review</p>
+      <h1>Hospital Performance Dashboard</h1>
+      <p class="subtitle">Revenue, visit volume, and patient satisfaction across 16,543 visits, 2,436 patients, and 200 doctors, drawn from the project's star-schema SQL model and rebuilt here for interactive review.</p>
+    </div>
+    <div class="meta">
+      <div class="byline">Motolani Kay&#8209;Salami</div>
+      Period covered: Jan 2020&ndash;Jun 2025<br>Figures in USD
+    </div>
+  </header>
+
+  <section class="kpi-strip">
+    <div class="kpi">
+      <span class="label">Total Revenue</span>
+      <span class="value mono" id="kpi-revenue">&mdash;</span>
+      <span class="delta">Billed, all visits</span>
+    </div>
+    <div class="kpi">
+      <span class="label">Total Visits</span>
+      <span class="value mono" id="kpi-visits">&mdash;</span>
+      <span class="delta">Distinct patient visits</span>
+    </div>
+    <div class="kpi">
+      <span class="label">Avg. Satisfaction</span>
+      <span class="value mono" id="kpi-satisfaction">&mdash;</span>
+      <span class="delta">Out of 5</span>
+    </div>
+    <div class="kpi">
+      <span class="label">Avg. Wait Time</span>
+      <span class="value mono" id="kpi-wait">&mdash;</span>
+      <span class="delta">Minutes per visit</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <div>
+        <h2>Revenue &amp; Visit Trend</h2>
+      </div>
+      <div class="seg" id="year-seg" role="group" aria-label="Filter by year"></div>
+    </div>
+    <div class="legend" style="margin-bottom:10px;">
+      <span><span class="dot" style="background:var(--accent)"></span>Monthly revenue</span>
+    </div>
+    <svg id="trend-chart" viewBox="0 0 1100 300" role="img" aria-label="Monthly revenue trend"></svg>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <div class="section-head">
+        <h2>Revenue by Department</h2>
+        <span class="hint">Top 15 of 33 departments</span>
+      </div>
+      <svg id="dept-chart" viewBox="0 0 620 430" role="img" aria-label="Revenue by department"></svg>
+    </div>
+    <div class="card">
+      <div class="section-head">
+        <h2>Top Doctors by Satisfaction</h2>
+        <span class="hint">Min. 30 visits</span>
+      </div>
+      <svg id="doctor-chart" viewBox="0 0 460 430" role="img" aria-label="Top doctors by average satisfaction"></svg>
+    </div>
+  </section>
+
+  <section class="grid-2b">
+    <div class="card">
+      <div class="section-head">
+        <h2>Revenue by Payment Method</h2>
+      </div>
+      <svg id="pay-chart" viewBox="0 0 540 200" role="img" aria-label="Revenue by payment method"></svg>
+    </div>
+    <div class="card">
+      <div class="section-head">
+        <h2>Avg. Bill by Age Group</h2>
+      </div>
+      <svg id="age-chart" viewBox="0 0 540 200" role="img" aria-label="Average bill amount by patient age group"></svg>
+    </div>
+  </section>
+
+  <section class="card notes">
+    <div class="section-head" style="margin-bottom:0;"><h2>Analyst notes</h2></div>
+    <p class="lede">Three things stood out on a first pass through the cleaned data:</p>
+    <div class="item">
+      <span class="n">01</span>
+      <p id="insight-dept">&mdash;</p>
+    </div>
+    <div class="item">
+      <span class="n">02</span>
+      <p id="insight-doctor">&mdash;</p>
+    </div>
+    <div class="item">
+      <span class="n">03</span>
+      <p id="insight-pay">&mdash;</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Built from the <strong>Hospital Data Analysis</strong> SQL project (star schema, CTEs, window functions); source data cleaned and aggregated with pandas from the project's own SQL scripts. Figures reflect the synthetic dataset used in that project.</span>
+    <span class="sig">&mdash; prepared as a companion piece to the SQL analysis</span>
+  </footer>
+
+</div>
+
+<div class="tooltip" id="tooltip"><div class="tt-title" id="tt-title"></div><div id="tt-body"></div></div>
+
+<script>
+const DATA = {"kpis": {"totalRevenue": 1507895816.35, "totalVisits": 16543, "avgSatisfaction": 3.62, "avgWait": 56.5}, "trend": [{"month": "2020-01", "revenue": 36702207.52, "visits": 382}, {"month": "2020-02", "revenue": 39698784.72, "visits": 449}, {"month": "2020-03", "revenue": 48480181.71, "visits": 509}, {"month": "2020-04", "revenue": 24267927.71, "visits": 271}, {"month": "2020-05", "revenue": 33993554.52, "visits": 364}, {"month": "2020-06", "revenue": 18138133.1, "visits": 196}, {"month": "2020-07", "revenue": 27087227.82, "visits": 324}, {"month": "2020-08", "revenue": 20532435.8, "visits": 218}, {"month": "2020-09", "revenue": 24131409.75, "visits": 262}, {"month": "2020-10", "revenue": 26692046.65, "visits": 277}, {"month": "2020-11", "revenue": 17701342.98, "visits": 206}, {"month": "2020-12", "revenue": 19950963.7, "visits": 223}, {"month": "2021-01", "revenue": 19892224.47, "visits": 203}, {"month": "2021-02", "revenue": 24384367.7, "visits": 275}, {"month": "2021-03", "revenue": 25207620.83, "visits": 280}, {"month": "2021-04", "revenue": 23639070.77, "visits": 277}, {"month": "2021-05", "revenue": 28355534.6, "visits": 304}, {"month": "2021-06", "revenue": 18669166.72, "visits": 205}, {"month": "2021-07", "revenue": 19873675.6, "visits": 207}, {"month": "2021-08", "revenue": 18879795.51, "visits": 198}, {"month": "2021-09", "revenue": 46959075.93, "visits": 525}, {"month": "2021-10", "revenue": 34058059.78, "visits": 387}, {"month": "2021-11", "revenue": 25551193.65, "visits": 274}, {"month": "2021-12", "revenue": 18549062.54, "visits": 191}, {"month": "2022-01", "revenue": 13297566.01, "visits": 139}, {"month": "2022-02", "revenue": 13181291.98, "visits": 131}, {"month": "2022-03", "revenue": 10606147.52, "visits": 117}, {"month": "2022-04", "revenue": 18053669.92, "visits": 205}, {"month": "2022-05", "revenue": 27818769.23, "visits": 309}, {"month": "2022-06", "revenue": 16447351.04, "visits": 181}, {"month": "2022-07", "revenue": 19396946.08, "visits": 199}, {"month": "2022-08", "revenue": 23234013.71, "visits": 278}, {"month": "2022-09", "revenue": 23558443.74, "visits": 274}, {"month": "2022-10", "revenue": 19529755.71, "visits": 228}, {"month": "2022-11", "revenue": 23488180.86, "visits": 252}, {"month": "2022-12", "revenue": 19349528.39, "visits": 219}, {"month": "2023-01", "revenue": 36788388.68, "visits": 384}, {"month": "2023-02", "revenue": 17592798.29, "visits": 198}, {"month": "2023-03", "revenue": 11859040.22, "visits": 133}, {"month": "2023-04", "revenue": 12162197.61, "visits": 146}, {"month": "2023-05", "revenue": 14262017.1, "visits": 149}, {"month": "2023-06", "revenue": 13866300.11, "visits": 146}, {"month": "2023-07", "revenue": 24499094.99, "visits": 281}, {"month": "2023-08", "revenue": 22433117.12, "visits": 246}, {"month": "2023-09", "revenue": 26086022.84, "visits": 271}, {"month": "2023-10", "revenue": 17159661.49, "visits": 205}, {"month": "2023-11", "revenue": 15093420.62, "visits": 166}, {"month": "2023-12", "revenue": 26749688.37, "visits": 286}, {"month": "2024-01", "revenue": 19621948.67, "visits": 205}, {"month": "2024-02", "revenue": 15554747.3, "visits": 187}, {"month": "2024-03", "revenue": 23755737.31, "visits": 277}, {"month": "2024-04", "revenue": 30315052.99, "visits": 335}, {"month": "2024-05", "revenue": 16577339.3, "visits": 178}, {"month": "2024-06", "revenue": 31193050.16, "visits": 347}, {"month": "2024-07", "revenue": 20401337.62, "visits": 228}, {"month": "2024-08", "revenue": 39292203.23, "visits": 417}, {"month": "2024-09", "revenue": 25635194.57, "visits": 289}, {"month": "2024-10", "revenue": 16352141.06, "visits": 178}, {"month": "2024-11", "revenue": 26617128.73, "visits": 300}, {"month": "2024-12", "revenue": 12461550.89, "visits": 139}, {"month": "2025-01", "revenue": 23254033.11, "visits": 261}, {"month": "2025-02", "revenue": 25716744.69, "visits": 287}, {"month": "2025-03", "revenue": 14611339.54, "visits": 153}, {"month": "2025-04", "revenue": 20394819.8, "visits": 212}, {"month": "2025-05", "revenue": 12822943.93, "visits": 135}, {"month": "2025-06", "revenue": 25410027.74, "visits": 265}], "departments": [{"name": "Nuclear Medicine", "revenue": 94311439.82, "visits": 1018}, {"name": "General Surgery", "revenue": 87051536.51, "visits": 962}, {"name": "Infectious Diseases", "revenue": 75738734.42, "visits": 804}, {"name": "Dermatology", "revenue": 69645420.39, "visits": 740}, {"name": "Pathology", "revenue": 65968595.73, "visits": 721}, {"name": "Endocrinology", "revenue": 64675493.62, "visits": 676}, {"name": "Gastroenterology", "revenue": 62538408.66, "visits": 662}, {"name": "Emergency Medicine", "revenue": 61611371.88, "visits": 669}, {"name": "Rheumatology", "revenue": 60354196.69, "visits": 681}, {"name": "Plastic Surgery", "revenue": 51577080.89, "visits": 581}, {"name": "Oncology", "revenue": 51089849.45, "visits": 588}, {"name": "Neurology", "revenue": 50703422.3, "visits": 549}, {"name": "Family Medicine", "revenue": 49647156.52, "visits": 564}, {"name": "Geriatrics", "revenue": 49096786.72, "visits": 548}, {"name": "Pediatrics", "revenue": 48876972.44, "visits": 525}, {"name": "Occupational Medicine", "revenue": 48386123.72, "visits": 525}, {"name": "Allergy and Immunology", "revenue": 47385677.15, "visits": 515}, {"name": "Anesthesiology", "revenue": 46921176.76, "visits": 516}, {"name": "Radiology", "revenue": 45592988.09, "visits": 495}, {"name": "Obstetrics and Gynecology", "revenue": 38989208.77, "visits": 430}, {"name": "Rehabilitation Medicine", "revenue": 38691443.81, "visits": 429}, {"name": "Urology", "revenue": 34767539.44, "visits": 394}, {"name": "Ophthalmology", "revenue": 34264931.63, "visits": 399}, {"name": "Cardiology", "revenue": 33256043.09, "visits": 361}, {"name": "Sleep Medicine", "revenue": 29988445.22, "visits": 309}, {"name": "Orthopedics", "revenue": 29629025.28, "visits": 334}, {"name": "Clinical Pharmacology", "revenue": 28427534.1, "visits": 329}, {"name": "Pain Management", "revenue": 28264135.25, "visits": 327}, {"name": "Otolaryngology", "revenue": 21845305.06, "visits": 250}, {"name": "Sports Medicine", "revenue": 20974255.3, "visits": 242}, {"name": "Pulmonology", "revenue": 15182455.6, "visits": 159}, {"name": "Hematology", "revenue": 14163638.07, "visits": 154}, {"name": "Nephrology", "revenue": 8279423.97, "visits": 87}], "topDoctors": [{"name": "Dr. Rohan Reddy", "avgSat": 4.35, "visits": 84}, {"name": "Dr. Raj Verma", "avgSat": 4.28, "visits": 87}, {"name": "Dr. Karan Mehra", "avgSat": 4.24, "visits": 79}, {"name": "Dr. Raj Gupta", "avgSat": 4.01, "visits": 91}, {"name": "Dr. Arjun Khan", "avgSat": 3.94, "visits": 86}, {"name": "Dr. Raj Khan", "avgSat": 3.94, "visits": 308}, {"name": "Dr. Pooja Khan", "avgSat": 3.9, "visits": 88}, {"name": "Dr. Priya Singh", "avgSat": 3.88, "visits": 68}, {"name": "Dr. Amit Gupta", "avgSat": 3.88, "visits": 170}, {"name": "Dr. Anita Mehra", "avgSat": 3.87, "visits": 86}], "paymentMethods": [{"name": "UPI", "revenue": 496320440.94, "visits": 5404}, {"name": "Debit Card", "revenue": 339841655.82, "visits": 3740}, {"name": "Credit Card", "revenue": 338839602.94, "visits": 3702}, {"name": "Cash", "revenue": 332894116.65, "visits": 3697}], "ageGroups": [{"name": "0-17", "avgBill": 88388.58, "visits": 2843}, {"name": "18-29", "avgBill": 90834.38, "visits": 3002}, {"name": "30-44", "avgBill": 91979.37, "visits": 3744}, {"name": "45-59", "avgBill": 91520.21, "visits": 3797}, {"name": "60-74", "avgBill": 92522.2, "visits": 3153}, {"name": "75+", "avgBill": 81701.13, "visits": 4}]};
+
+const fmtMoney = n => "$" + Math.round(n).toLocaleString("en-US");
+const fmtMoneyShort = n => {
+  if (n >= 1e6) return "$" + (n/1e6).toFixed(1).replace(/\.0$/,'') + "M";
+  if (n >= 1e3) return "$" + (n/1e3).toFixed(0) + "K";
+  return "$" + Math.round(n);
+};
+const fmtNum = n => Math.round(n).toLocaleString("en-US");
+
+document.getElementById("kpi-revenue").textContent = fmtMoney(DATA.kpis.totalRevenue);
+document.getElementById("kpi-visits").textContent = fmtNum(DATA.kpis.totalVisits);
+document.getElementById("kpi-satisfaction").textContent = DATA.kpis.avgSatisfaction.toFixed(1);
+document.getElementById("kpi-wait").textContent = Math.round(DATA.kpis.avgWait) + " min";
+
+const topDept = DATA.departments[0];
+document.getElementById("insight-dept").innerHTML =
+  `<strong>${topDept.name}</strong> leads all 33 departments in billed revenue &mdash; ${fmtMoneyShort(topDept.revenue)} across ${fmtNum(topDept.visits)} visits, ahead of General Surgery in second place.`;
+const topDoc = DATA.topDoctors[0];
+document.getElementById("insight-doctor").innerHTML =
+  `Among doctors with 30+ visits, <strong>${topDoc.name}</strong> holds the highest average satisfaction score at ${topDoc.avgSat.toFixed(2)}/5.`;
+const topPay = DATA.paymentMethods[0];
+document.getElementById("insight-pay").innerHTML =
+  `<strong>${topPay.name}</strong> is the most-used payment method by revenue, at ${fmtMoneyShort(topPay.revenue)} across ${fmtNum(topPay.visits)} visits &mdash; roughly a third of all billing.`;
+
+// ---------- tooltip ----------
+const tooltipEl = document.getElementById("tooltip");
+const ttTitle = document.getElementById("tt-title");
+const ttBody = document.getElementById("tt-body");
+function showTooltip(evt, title, body){
+  ttTitle.textContent = title;
+  ttBody.textContent = body;
+  tooltipEl.style.left = evt.clientX + "px";
+  tooltipEl.style.top = evt.clientY + "px";
+  tooltipEl.classList.add("show");
+}
+function hideTooltip(){ tooltipEl.classList.remove("show"); }
+
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// ---------- horizontal bar chart ----------
+function drawBarChart(svgId, items, {valueKey, labelKey, secondaryKey, secondaryFmt, valueFmt, color}) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = "";
+  const vb = svg.viewBox.baseVal;
+  const W = vb.width, H = vb.height;
+  const leftPad = 150, rightPad = 70, topPad = 6, rowH = (H - topPad) / items.length;
+  const barMax = Math.max(...items.map(d => d[valueKey]));
+  const chartW = W - leftPad - rightPad;
+
+  items.forEach((d, i) => {
+    const y = topPad + i * rowH;
+    const barH = Math.min(20, rowH * 0.55);
+    const barY = y + (rowH - barH) / 2;
+    const w = (d[valueKey] / barMax) * chartW;
+
+    const g = el("g", {class:"hover-target"});
+    g.appendChild(el("rect", {x:leftPad, y:barY, width:chartW, height:barH, fill:"var(--gridline)", opacity:0.35, rx:4}));
+    const bar = el("rect", {x:leftPad, y:barY, width:Math.max(w,2), height:barH, fill:color, rx:4});
+    g.appendChild(bar);
+
+    const label = el("text", {class:"bar-label", x:leftPad-10, y:barY+barH/2+4, "text-anchor":"end"});
+    label.textContent = d[labelKey].length > 22 ? d[labelKey].slice(0,21)+"…" : d[labelKey];
+    g.appendChild(label);
+
+    const valText = el("text", {class:"bar-value", x:leftPad+Math.max(w,2)+8, y:barY+barH/2+4});
+    valText.textContent = valueFmt(d[valueKey]);
+    g.appendChild(valText);
+
+    g.addEventListener("mousemove", (evt) => {
+      const secondary = secondaryKey ? `\n${secondaryFmt(d[secondaryKey])}` : "";
+      showTooltip(evt, d[labelKey], `${valueFmt(d[valueKey])}${secondary ? " · " + secondaryFmt(d[secondaryKey]) : ""}`);
+    });
+    g.addEventListener("mouseleave", hideTooltip);
+
+    svg.appendChild(g);
+  });
+}
+
+drawBarChart("dept-chart", DATA.departments.slice(0,15), {
+  valueKey:"revenue", labelKey:"name", secondaryKey:"visits",
+  valueFmt: fmtMoneyShort, secondaryFmt: v => fmtNum(v) + " visits", color:"var(--accent)"
+});
+
+drawBarChart("doctor-chart", DATA.topDoctors, {
+  valueKey:"avgSat", labelKey:"name", secondaryKey:"visits",
+  valueFmt: v => v.toFixed(2), secondaryFmt: v => fmtNum(v) + " visits", color:"var(--accent)"
+});
+
+drawBarChart("pay-chart", DATA.paymentMethods, {
+  valueKey:"revenue", labelKey:"name", secondaryKey:"visits",
+  valueFmt: fmtMoneyShort, secondaryFmt: v => fmtNum(v) + " visits", color:"var(--accent)"
+});
+
+drawBarChart("age-chart", DATA.ageGroups, {
+  valueKey:"avgBill", labelKey:"name", secondaryKey:"visits",
+  valueFmt: fmtMoneyShort, secondaryFmt: v => fmtNum(v) + " visits", color:"var(--accent)"
+});
+
+// ---------- trend line chart ----------
+let currentYear = "All";
+function drawTrend(){
+  const svg = document.getElementById("trend-chart");
+  svg.innerHTML = "";
+  const vb = svg.viewBox.baseVal;
+  const W = vb.width, H = vb.height;
+  const padL = 64, padR = 16, padT = 16, padB = 34;
+  const chartW = W - padL - padR, chartH = H - padT - padB;
+
+  const points = currentYear === "All" ? DATA.trend : DATA.trend.filter(p => p.month.startsWith(currentYear));
+  const maxRev = Math.max(...points.map(p => p.revenue));
+  const niceMax = Math.ceil(maxRev / 5e6) * 5e6;
+
+  // gridlines + y labels
+  const steps = 5;
+  for (let s = 0; s <= steps; s++){
+    const val = niceMax * s / steps;
+    const y = padT + chartH - (val/niceMax)*chartH;
+    svg.appendChild(el("line", {class:"grid-line", x1:padL, x2:W-padR, y1:y, y2:y}));
+    const t = el("text", {class:"axis-label", x:padL-8, y:y+3, "text-anchor":"end"});
+    t.textContent = fmtMoneyShort(val);
+    svg.appendChild(t);
+  }
+  svg.appendChild(el("line", {class:"baseline", x1:padL, x2:padL, y1:padT, y2:padT+chartH}));
+
+  const stepX = chartW / Math.max(points.length - 1, 1);
+  const coords = points.map((p,i) => ({
+    x: padL + i*stepX,
+    y: padT + chartH - (p.revenue/niceMax)*chartH,
+    p
+  }));
+
+  // area fill
+  let areaD = `M ${coords[0].x} ${padT+chartH} `;
+  coords.forEach(c => areaD += `L ${c.x} ${c.y} `);
+  areaD += `L ${coords[coords.length-1].x} ${padT+chartH} Z`;
+  svg.appendChild(el("path", {d:areaD, fill:"var(--accent)", opacity:0.08}));
+
+  // line
+  let lineD = `M ${coords[0].x} ${coords[0].y} `;
+  coords.forEach((c,i) => { if(i>0) lineD += `L ${c.x} ${c.y} `; });
+  svg.appendChild(el("path", {d:lineD, fill:"none", stroke:"var(--accent)", "stroke-width":2.25}));
+
+  // x labels (sparse, skip the near-last tick if it would collide with the final label)
+  const labelEvery = Math.max(1, Math.ceil(points.length / 8));
+  const lastIdx = coords.length - 1;
+  coords.forEach((c,i) => {
+    const isTick = i % labelEvery === 0;
+    const nearEnd = isTick && i !== lastIdx && (lastIdx - i) * stepX < 55;
+    if ((isTick && !nearEnd) || i === lastIdx){
+      const t = el("text", {class:"axis-label", x:c.x, y:H-8, "text-anchor": i === lastIdx ? "end" : "middle"});
+      t.textContent = c.p.month;
+      svg.appendChild(t);
+    }
+  });
+
+  // hover dots + hit areas
+  coords.forEach(c => {
+    const hit = el("rect", {x:c.x-stepX/2, y:padT, width:stepX, height:chartH, fill:"transparent", class:"hover-target"});
+    const dot = el("circle", {cx:c.x, cy:c.y, r:3.5, fill:"var(--accent)", opacity:0});
+    svg.appendChild(hit);
+    svg.appendChild(dot);
+    hit.addEventListener("mousemove", (evt) => {
+      dot.setAttribute("opacity", 1);
+      showTooltip(evt, c.p.month, `${fmtMoney(c.p.revenue)} · ${fmtNum(c.p.visits)} visits`);
+    });
+    hit.addEventListener("mouseleave", () => { dot.setAttribute("opacity", 0); hideTooltip(); });
+  });
+}
+
+const years = ["All", ...Array.from(new Set(DATA.trend.map(p => p.month.slice(0,4)))).sort()];
+const seg = document.getElementById("year-seg");
+years.forEach(y => {
+  const btn = document.createElement("button");
+  btn.textContent = y;
+  btn.setAttribute("aria-pressed", y === currentYear ? "true" : "false");
+  btn.addEventListener("click", () => {
+    currentYear = y;
+    [...seg.children].forEach(b => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+    drawTrend();
+  });
+  seg.appendChild(btn);
+});
+
+drawTrend();
+</script>
